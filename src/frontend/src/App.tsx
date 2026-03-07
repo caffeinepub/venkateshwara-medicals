@@ -11,6 +11,7 @@ import CartDrawer from "./components/CartDrawer";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import AboutPage from "./pages/AboutPage";
+import AdminPage from "./pages/AdminPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ContactPage from "./pages/ContactPage";
@@ -69,6 +70,11 @@ const orderConfirmationRoute = createRoute({
   path: "/order-confirmation/$orderId",
   component: OrderConfirmationPage,
 });
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin",
+  component: AdminPage,
+});
 
 const routeTree = rootRoute.addChildren([
   homeRoute,
@@ -78,6 +84,7 @@ const routeTree = rootRoute.addChildren([
   cartRoute,
   checkoutRoute,
   orderConfirmationRoute,
+  adminRoute,
 ]);
 
 const router = createRouter({ routeTree });

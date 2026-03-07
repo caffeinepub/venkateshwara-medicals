@@ -141,6 +141,12 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 font-body text-xs text-green-300">
           <span>© {year} Venkateshwara Medicals. All rights reserved.</span>
+          <Link
+            to="/admin"
+            className="text-white/20 hover:text-white/50 transition-colors text-[11px]"
+          >
+            Admin
+          </Link>
         </div>
       </div>
     </footer>

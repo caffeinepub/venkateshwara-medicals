@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingCart, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { Product } from "../backend";
+import { applyStockOverrides } from "../lib/adminOverrides";
 import {
   getCategoryColor,
   getCategoryLabel,
@@ -16,10 +17,12 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({
-  product,
+  product: rawProduct,
   onViewDetails,
 }: ProductCardProps) {
   const addToCart = useCartStore((s) => s.addToCart);
+  // Apply admin stock overrides from localStorage
+  const [product] = applyStockOverrides([rawProduct]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();

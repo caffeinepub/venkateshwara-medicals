@@ -99,7 +99,8 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="font-body font-semibold border-white/50 text-white hover:bg-white/10 hover:text-white"
+                  data-ocid="hero.learn_more_button"
+                  className="font-body font-semibold border-white/50 text-white bg-transparent hover:bg-white/10 hover:text-white"
                 >
                   Learn More
                 </Button>

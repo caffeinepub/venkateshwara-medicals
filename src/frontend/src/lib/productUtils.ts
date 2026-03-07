@@ -70,7 +70,7 @@ const IMAGE_URL_MAP: Record<string, string> = {
   "/assets/generated/bpmonitor.jpg":
     "/assets/generated/product-bp-monitor.dim_400x400.png",
   "/assets/generated/facewash.jpg":
-    "/assets/generated/product-moisturizer.dim_400x400.png",
+    "/assets/generated/product-aloe-vera-facewash.dim_400x400.png",
   "/assets/generated/calciumd3.jpg":
     "/assets/generated/product-omega3.dim_400x400.png",
   "/assets/generated/coughsyrup.jpg":
@@ -80,7 +80,7 @@ const IMAGE_URL_MAP: Record<string, string> = {
   "/assets/generated/nebulizer.jpg":
     "/assets/generated/product-oximeter.dim_400x400.png",
   "/assets/generated/sunscreen.jpg":
-    "/assets/generated/product-moisturizer.dim_400x400.png",
+    "/assets/generated/product-sunscreen-lotion.dim_400x400.png",
   "/assets/generated/multivitamin.jpg":
     "/assets/generated/product-multivitamin.dim_400x400.png",
   "/assets/generated/immunitysyrup.jpg":

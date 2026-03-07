@@ -11,6 +11,7 @@ import { CheckCircle, Minus, Plus, ShoppingCart, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Product } from "../backend";
+import { applyStockOverrides } from "../lib/adminOverrides";
 import {
   getCategoryColor,
   getCategoryLabel,
@@ -25,14 +26,16 @@ interface ProductDetailModalProps {
 }
 
 export default function ProductDetailModal({
-  product,
+  product: rawProduct,
   open,
   onClose,
 }: ProductDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
   const addToCart = useCartStore((s) => s.addToCart);
 
-  if (!product) return null;
+  if (!rawProduct) return null;
+  // Apply admin stock overrides
+  const [product] = applyStockOverrides([rawProduct]);
 
   const handleAddToCart = () => {
     addToCart(
