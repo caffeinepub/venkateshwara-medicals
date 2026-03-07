@@ -16,7 +16,7 @@ export function useInitialize() {
   });
 }
 
-export function useGetAllProducts() {
+export function useGetAllProducts(isInitialized = true) {
   const { actor, isFetching } = useActor();
   return useQuery<Product[]>({
     queryKey: ["products"],
@@ -24,11 +24,11 @@ export function useGetAllProducts() {
       if (!actor) return [];
       return actor.getAllProducts();
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor && !isFetching && isInitialized,
   });
 }
 
-export function useGetFeaturedProducts() {
+export function useGetFeaturedProducts(isInitialized = true) {
   const { actor, isFetching } = useActor();
   return useQuery<Product[]>({
     queryKey: ["products", "featured"],
@@ -36,11 +36,14 @@ export function useGetFeaturedProducts() {
       if (!actor) return [];
       return actor.getFeaturedProducts();
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor && !isFetching && isInitialized,
   });
 }
 
-export function useGetProductsByCategory(category: Category | null) {
+export function useGetProductsByCategory(
+  category: Category | null,
+  isInitialized = true,
+) {
   const { actor, isFetching } = useActor();
   return useQuery<Product[]>({
     queryKey: ["products", "category", category],
@@ -48,7 +51,7 @@ export function useGetProductsByCategory(category: Category | null) {
       if (!actor || !category) return [];
       return actor.getProductsByCategory(category);
     },
-    enabled: !!actor && !isFetching && category !== null,
+    enabled: !!actor && !isFetching && category !== null && isInitialized,
   });
 }
 

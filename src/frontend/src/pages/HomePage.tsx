@@ -39,8 +39,9 @@ export default function HomePage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  useInitialize();
-  const { data: featuredProducts, isLoading } = useGetFeaturedProducts();
+  const { isSuccess: isInitialized } = useInitialize();
+  const { data: featuredProducts, isLoading } =
+    useGetFeaturedProducts(isInitialized);
 
   const handleViewDetails = (product: Product) => {
     setSelectedProduct(product);

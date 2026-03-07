@@ -22,11 +22,12 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  useInitialize();
+  const { isSuccess: isInitialized } = useInitialize();
 
-  const { data: allProducts, isLoading: allLoading } = useGetAllProducts();
+  const { data: allProducts, isLoading: allLoading } =
+    useGetAllProducts(isInitialized);
   const { data: categoryProducts, isLoading: catLoading } =
-    useGetProductsByCategory(selectedCategory);
+    useGetProductsByCategory(selectedCategory, isInitialized);
 
   const isLoading = selectedCategory ? catLoading : allLoading;
   const rawProducts = selectedCategory
