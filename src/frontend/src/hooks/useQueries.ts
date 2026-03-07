@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Category, PlaceOrderRequest, Product } from "../backend";
+import type { Category, Order, PlaceOrderRequest, Product } from "../backend";
 import { useActor } from "./useActor";
 
 export function useInitialize() {
@@ -12,7 +12,10 @@ export function useInitialize() {
       return true;
     },
     enabled: !!actor && !isFetching,
-    staleTime: Number.POSITIVE_INFINITY,
+    staleTime: 0,
+    gcTime: 0,
+    retry: 5,
+    retryDelay: 1000,
   });
 }
 
@@ -25,6 +28,7 @@ export function useGetAllProducts(isInitialized = true) {
       return actor.getAllProducts();
     },
     enabled: !!actor && !isFetching && isInitialized,
+    staleTime: 0,
   });
 }
 
@@ -37,6 +41,7 @@ export function useGetFeaturedProducts(isInitialized = true) {
       return actor.getFeaturedProducts();
     },
     enabled: !!actor && !isFetching && isInitialized,
+    staleTime: 0,
   });
 }
 
@@ -52,6 +57,7 @@ export function useGetProductsByCategory(
       return actor.getProductsByCategory(category);
     },
     enabled: !!actor && !isFetching && category !== null && isInitialized,
+    staleTime: 0,
   });
 }
 
@@ -78,6 +84,19 @@ export function usePlaceOrder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
+  });
+}
+
+export function useGetAllOrders(isInitialized = true) {
+  const { actor, isFetching } = useActor();
+  return useQuery<Order[]>({
+    queryKey: ["orders"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllOrders();
+    },
+    enabled: !!actor && !isFetching && isInitialized,
+    staleTime: 0,
   });
 }
 

@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { Menu, Phone, ShoppingCart, X } from "lucide-react";
 import { useState } from "react";
 import { useCartStore } from "../store/cartStore";
@@ -8,7 +7,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const itemCount = useCartStore((s) => s.getItemCount());
   const setCartOpen = useCartStore((s) => s.setCartOpen);
-  const router = useRouter();
+  const location = useLocation();
 
   const navLinks = [
     { label: "Home", to: "/" },
@@ -17,7 +16,7 @@ export default function Navbar() {
     { label: "Contact", to: "/contact" },
   ];
 
-  const currentPath = router.state.location.pathname;
+  const currentPath = location.pathname;
 
   return (
     <header
