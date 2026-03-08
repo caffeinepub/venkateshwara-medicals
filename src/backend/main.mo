@@ -3,13 +3,13 @@ import Text "mo:core/Text";
 import List "mo:core/List";
 import Nat "mo:core/Nat";
 import Runtime "mo:core/Runtime";
-import Order "mo:core/Order";
 import Time "mo:core/Time";
-import Float "mo:core/Float";
+import Order "mo:core/Order";
 import Iter "mo:core/Iter";
+import Float "mo:core/Float";
+import Migration "migration";
 
-
-
+(with migration = Migration.run)
 actor {
   type Category = {
     #medicines;
@@ -61,6 +61,30 @@ actor {
     prescriptionNote : ?Text;
     items : [{ productId : Nat; quantity : Nat }];
     totalPrice : Float;
+    paymentStatus : {
+      #awaitingVerification;
+      #paymentConfirmed;
+      #rejected;
+    };
+    transactionId : ?Text;
+  };
+
+  type PlaceOrderRequest = {
+    customerName : Text;
+    phoneNumber : Text;
+    address : {
+      line1 : Text;
+      city : Text;
+      pincode : Text;
+    };
+    prescriptionNote : ?Text;
+    items : [{ productId : Nat; quantity : Nat }];
+  };
+
+  type PlaceOrderResponse = {
+    orderId : Nat;
+    timestamp : Time.Time;
+    totalPrice : Float;
   };
 
   let products = Map.empty<Nat, Product>();
@@ -73,7 +97,6 @@ actor {
     nextProductId += 1;
   };
 
-  // Seed initial products
   public func seedProducts() : () {
     if (products.size() > 0) {
       return;
@@ -252,8 +275,7 @@ actor {
   };
 
   public query ({ caller }) func getAllProducts() : async [Product] {
-    let productIter = products.values();
-    productIter.toArray().sort();
+    products.values().toArray();
   };
 
   public query ({ caller }) func getProductsByCategory(category : Category) : async [Product] {
@@ -263,7 +285,7 @@ actor {
         filtered.add(product);
       };
     };
-    filtered.toArray().sort();
+    filtered.toArray();
   };
 
   public query ({ caller }) func getFeaturedProducts() : async [Product] {
@@ -273,7 +295,7 @@ actor {
         filtered.add(product);
       };
     };
-    filtered.toArray().sort();
+    filtered.toArray();
   };
 
   public query ({ caller }) func getProductById(id : Nat) : async ?Product {
@@ -282,7 +304,7 @@ actor {
 
   public query ({ caller }) func searchProducts(searchTerm : Text) : async [Product] {
     if (searchTerm.size() == 0) {
-      return products.values().toArray().sort();
+      return products.values().toArray();
     };
 
     let searchTermLower = searchTerm.toLower();
@@ -301,25 +323,7 @@ actor {
         filtered.add(product);
       };
     };
-    filtered.toArray().sort();
-  };
-
-  public type PlaceOrderRequest = {
-    customerName : Text;
-    phoneNumber : Text;
-    address : {
-      line1 : Text;
-      city : Text;
-      pincode : Text;
-    };
-    prescriptionNote : ?Text;
-    items : [{ productId : Nat; quantity : Nat }];
-  };
-
-  public type PlaceOrderResponse = {
-    orderId : Nat;
-    timestamp : Time.Time;
-    totalPrice : Float;
+    filtered.toArray();
   };
 
   public shared ({ caller }) func placeOrder(request : PlaceOrderRequest) : async PlaceOrderResponse {
@@ -365,6 +369,8 @@ actor {
       prescriptionNote = request.prescriptionNote;
       items = request.items;
       totalPrice;
+      paymentStatus = #awaitingVerification;
+      transactionId = null;
     };
 
     orders.add(nextOrderId, newOrder);
@@ -403,5 +409,61 @@ actor {
     nextProductId := 1;
     nextOrderId := 1;
     seedProducts();
+  };
+
+  public shared ({ caller }) func submitPaymentProof(orderId : Nat, transactionId : Text) : async () {
+    switch (orders.get(orderId)) {
+      case (null) { Runtime.trap("Order not found") };
+      case (?order) {
+        let updatedOrder = { order with transactionId = ?transactionId; paymentStatus = #awaitingVerification };
+        orders.add(orderId, updatedOrder);
+      };
+    };
+  };
+
+  public shared ({ caller }) func confirmPayment(orderId : Nat) : async () {
+    switch (orders.get(orderId)) {
+      case (null) { Runtime.trap("Order not found") };
+      case (?order) {
+        let updatedOrder = { order with paymentStatus = #paymentConfirmed };
+        orders.add(orderId, updatedOrder);
+      };
+    };
+  };
+
+  public shared ({ caller }) func rejectPayment(orderId : Nat) : async () {
+    switch (orders.get(orderId)) {
+      case (null) { Runtime.trap("Order not found") };
+      case (?order) {
+        let updatedOrder = { order with paymentStatus = #rejected };
+        orders.add(orderId, updatedOrder);
+      };
+    };
+  };
+
+  public query ({ caller }) func getPendingPaymentOrders() : async [Order] {
+    let filtered = List.empty<Order>();
+    for ((_, order) in orders.entries()) {
+      switch (order.paymentStatus) {
+        case (#awaitingVerification) {
+          filtered.add(order);
+        };
+        case (_) {};
+      };
+    };
+    filtered.toArray();
+  };
+
+  public query ({ caller }) func getConfirmedOrders() : async [Order] {
+    let filtered = List.empty<Order>();
+    for ((_, order) in orders.entries()) {
+      switch (order.paymentStatus) {
+        case (#paymentConfirmed) {
+          filtered.add(order);
+        };
+        case (_) {};
+      };
+    };
+    filtered.toArray();
   };
 };

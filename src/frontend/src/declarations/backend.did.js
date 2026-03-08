@@ -11,6 +11,11 @@ import { IDL } from '@icp-sdk/core/candid';
 export const Time = IDL.Int;
 export const Order = IDL.Record({
   'customerName' : IDL.Text,
+  'paymentStatus' : IDL.Variant({
+    'paymentConfirmed' : IDL.Null,
+    'awaitingVerification' : IDL.Null,
+    'rejected' : IDL.Null,
+  }),
   'orderId' : IDL.Nat,
   'prescriptionNote' : IDL.Opt(IDL.Text),
   'address' : IDL.Record({
@@ -24,6 +29,7 @@ export const Order = IDL.Record({
   ),
   'phoneNumber' : IDL.Text,
   'totalPrice' : IDL.Float64,
+  'transactionId' : IDL.Opt(IDL.Text),
 });
 export const Category = IDL.Variant({
   'vitaminsSupplements' : IDL.Null,
@@ -63,17 +69,22 @@ export const PlaceOrderResponse = IDL.Record({
 
 export const idlService = IDL.Service({
   'clearAllData' : IDL.Func([], [], []),
+  'confirmPayment' : IDL.Func([IDL.Nat], [], []),
   'getAllOrders' : IDL.Func([], [IDL.Vec(Order)], ['query']),
   'getAllProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
+  'getConfirmedOrders' : IDL.Func([], [IDL.Vec(Order)], ['query']),
   'getFeaturedProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
   'getOrder' : IDL.Func([IDL.Nat], [IDL.Opt(Order)], ['query']),
   'getOrdersByPhoneNumber' : IDL.Func([IDL.Text], [IDL.Vec(Order)], ['query']),
+  'getPendingPaymentOrders' : IDL.Func([], [IDL.Vec(Order)], ['query']),
   'getProductById' : IDL.Func([IDL.Nat], [IDL.Opt(Product)], ['query']),
   'getProductsByCategory' : IDL.Func([Category], [IDL.Vec(Product)], ['query']),
   'initialize' : IDL.Func([], [], []),
   'placeOrder' : IDL.Func([PlaceOrderRequest], [PlaceOrderResponse], []),
+  'rejectPayment' : IDL.Func([IDL.Nat], [], []),
   'searchProducts' : IDL.Func([IDL.Text], [IDL.Vec(Product)], ['query']),
   'seedProducts' : IDL.Func([], [], ['oneway']),
+  'submitPaymentProof' : IDL.Func([IDL.Nat, IDL.Text], [], []),
 });
 
 export const idlInitArgs = [];
@@ -82,6 +93,11 @@ export const idlFactory = ({ IDL }) => {
   const Time = IDL.Int;
   const Order = IDL.Record({
     'customerName' : IDL.Text,
+    'paymentStatus' : IDL.Variant({
+      'paymentConfirmed' : IDL.Null,
+      'awaitingVerification' : IDL.Null,
+      'rejected' : IDL.Null,
+    }),
     'orderId' : IDL.Nat,
     'prescriptionNote' : IDL.Opt(IDL.Text),
     'address' : IDL.Record({
@@ -95,6 +111,7 @@ export const idlFactory = ({ IDL }) => {
     ),
     'phoneNumber' : IDL.Text,
     'totalPrice' : IDL.Float64,
+    'transactionId' : IDL.Opt(IDL.Text),
   });
   const Category = IDL.Variant({
     'vitaminsSupplements' : IDL.Null,
@@ -134,8 +151,10 @@ export const idlFactory = ({ IDL }) => {
   
   return IDL.Service({
     'clearAllData' : IDL.Func([], [], []),
+    'confirmPayment' : IDL.Func([IDL.Nat], [], []),
     'getAllOrders' : IDL.Func([], [IDL.Vec(Order)], ['query']),
     'getAllProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
+    'getConfirmedOrders' : IDL.Func([], [IDL.Vec(Order)], ['query']),
     'getFeaturedProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
     'getOrder' : IDL.Func([IDL.Nat], [IDL.Opt(Order)], ['query']),
     'getOrdersByPhoneNumber' : IDL.Func(
@@ -143,6 +162,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(Order)],
         ['query'],
       ),
+    'getPendingPaymentOrders' : IDL.Func([], [IDL.Vec(Order)], ['query']),
     'getProductById' : IDL.Func([IDL.Nat], [IDL.Opt(Product)], ['query']),
     'getProductsByCategory' : IDL.Func(
         [Category],
@@ -151,8 +171,10 @@ export const idlFactory = ({ IDL }) => {
       ),
     'initialize' : IDL.Func([], [], []),
     'placeOrder' : IDL.Func([PlaceOrderRequest], [PlaceOrderResponse], []),
+    'rejectPayment' : IDL.Func([IDL.Nat], [], []),
     'searchProducts' : IDL.Func([IDL.Text], [IDL.Vec(Product)], ['query']),
     'seedProducts' : IDL.Func([], [], ['oneway']),
+    'submitPaymentProof' : IDL.Func([IDL.Nat, IDL.Text], [], []),
   });
 };
 

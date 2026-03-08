@@ -104,7 +104,7 @@ export default function CheckoutPage() {
 
       clearCart();
       navigate({
-        to: "/order-confirmation/$orderId",
+        to: "/payment/$orderId",
         params: { orderId: response.orderId.toString() },
       });
     } catch (_err) {
@@ -341,10 +341,10 @@ export default function CheckoutPage() {
                   {isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Placing Order...
+                      Processing...
                     </>
                   ) : (
-                    "Place Order"
+                    "Proceed to Payment"
                   )}
                 </Button>
                 <p className="font-body text-xs text-muted-foreground text-center mt-3">

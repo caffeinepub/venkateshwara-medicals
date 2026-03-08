@@ -1,6 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Link, useParams } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle, MapPin, Package, Phone } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle,
+  CheckCircle2,
+  Clock,
+  MapPin,
+  Package,
+  Phone,
+  XCircle,
+} from "lucide-react";
 import { useGetOrder } from "../hooks/useQueries";
 import { useCartStore } from "../store/cartStore";
 
@@ -20,6 +30,106 @@ export default function OrderConfirmationPage() {
     });
   };
 
+  const paymentStatus = order?.paymentStatus;
+
+  const PaymentStatusBanner = () => {
+    if (!order) return null;
+
+    if (paymentStatus === "awaitingVerification") {
+      return (
+        <div
+          data-ocid="order.payment.awaiting_state"
+          className="rounded-xl p-4 mb-6 flex items-start gap-3"
+          style={{
+            backgroundColor: "#fffbeb",
+            border: "1px solid #f59e0b",
+          }}
+        >
+          <Clock className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-body font-semibold text-amber-800 text-sm">
+              Payment Pending Verification
+            </p>
+            <p className="font-body text-amber-700 text-xs mt-1">
+              Our team will verify your payment shortly. Your order will be
+              confirmed once payment is verified.
+            </p>
+            {order.transactionId && (
+              <p className="font-body text-xs text-amber-600 mt-1.5">
+                Transaction ID:{" "}
+                <span className="font-mono font-medium">
+                  {order.transactionId}
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (paymentStatus === "paymentConfirmed") {
+      return (
+        <div
+          data-ocid="order.payment.confirmed_state"
+          className="rounded-xl p-4 mb-6 flex items-start gap-3"
+          style={{
+            backgroundColor: "#f0f9f4",
+            border: "1px solid #1a6b3c",
+          }}
+        >
+          <CheckCircle2
+            className="w-5 h-5 shrink-0 mt-0.5"
+            style={{ color: "#1a6b3c" }}
+          />
+          <div>
+            <p
+              className="font-body font-semibold text-sm"
+              style={{ color: "#1a6b3c" }}
+            >
+              Payment Confirmed
+            </p>
+            <p className="font-body text-xs mt-1 text-green-700">
+              Your order is confirmed and being processed.
+            </p>
+            {order.transactionId && (
+              <p className="font-body text-xs text-green-600 mt-1.5">
+                Transaction ID:{" "}
+                <span className="font-mono font-medium">
+                  {order.transactionId}
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (paymentStatus === "rejected") {
+      return (
+        <div
+          data-ocid="order.payment.rejected_state"
+          className="rounded-xl p-4 mb-6 flex items-start gap-3"
+          style={{
+            backgroundColor: "#fef2f2",
+            border: "1px solid #ef4444",
+          }}
+        >
+          <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-body font-semibold text-red-800 text-sm">
+              Payment Rejected
+            </p>
+            <p className="font-body text-red-700 text-xs mt-1">
+              Please contact us at +91 98765 43210 to resolve your payment.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-background py-16">
       <div className="container mx-auto px-4 max-w-2xl">
@@ -29,16 +139,32 @@ export default function OrderConfirmationPage() {
             className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
             style={{ backgroundColor: "#f0f9f4" }}
           >
-            <CheckCircle className="w-10 h-10" style={{ color: "#1a6b3c" }} />
+            {paymentStatus === "rejected" ? (
+              <AlertCircle className="w-10 h-10 text-red-500" />
+            ) : paymentStatus === "paymentConfirmed" ? (
+              <CheckCircle className="w-10 h-10" style={{ color: "#1a6b3c" }} />
+            ) : (
+              <Clock className="w-10 h-10 text-amber-500" />
+            )}
           </div>
           <h1 className="font-heading font-bold text-3xl text-foreground mb-2">
-            Order Placed!
+            {paymentStatus === "paymentConfirmed"
+              ? "Order Confirmed!"
+              : paymentStatus === "rejected"
+                ? "Payment Issue"
+                : "Order Received!"}
           </h1>
           <p className="font-body text-muted-foreground">
-            Thank you for shopping with Venkateshwara Medicals. Your order has
-            been received.
+            {paymentStatus === "paymentConfirmed"
+              ? "Your order is confirmed and being processed by our team."
+              : paymentStatus === "rejected"
+                ? "There was an issue with your payment. Please contact us."
+                : "Your order has been received. Awaiting payment verification."}
           </p>
         </div>
+
+        {/* Payment Status Banner */}
+        <PaymentStatusBanner />
 
         {/* Order details card */}
         <div className="bg-card rounded-xl border border-border p-6 mb-6">
@@ -106,7 +232,7 @@ export default function OrderConfirmationPage() {
 
               <div className="pt-4 border-t border-border flex items-center justify-between">
                 <span className="font-body font-semibold text-foreground">
-                  Total Paid
+                  Total Amount
                 </span>
                 <span
                   className="font-heading font-bold text-2xl"
@@ -136,15 +262,26 @@ export default function OrderConfirmationPage() {
         >
           <p className="font-medium text-foreground mb-1">What happens next?</p>
           <ul className="text-muted-foreground space-y-1 list-disc list-inside">
-            <li>Our pharmacist will review your order</li>
-            <li>You'll receive a call to confirm delivery time</li>
-            <li>Delivery within 2–4 hours (same-day orders)</li>
+            {paymentStatus === "paymentConfirmed" ? (
+              <>
+                <li>Your order is confirmed and being prepared</li>
+                <li>You'll receive a call to confirm delivery time</li>
+                <li>Delivery within 2–4 hours (same-day orders)</li>
+              </>
+            ) : (
+              <>
+                <li>Our pharmacist will verify your UPI payment</li>
+                <li>You'll receive a call once your order is confirmed</li>
+                <li>Delivery within 2–4 hours after confirmation</li>
+              </>
+            )}
           </ul>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
           <Link to="/" onClick={clearCart} className="flex-1">
             <Button
+              data-ocid="order.continue_shopping_button"
               className="w-full font-body font-semibold gap-2"
               style={{ backgroundColor: "#1a6b3c", color: "#fff" }}
             >
@@ -153,6 +290,7 @@ export default function OrderConfirmationPage() {
           </Link>
           <Link to="/products" className="flex-1">
             <Button
+              data-ocid="order.browse_products_button"
               variant="outline"
               className="w-full font-body"
               style={{ borderColor: "#1a6b3c", color: "#1a6b3c" }}

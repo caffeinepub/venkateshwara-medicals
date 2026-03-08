@@ -29,6 +29,7 @@ export interface PlaceOrderResponse {
 export type Time = bigint;
 export interface Order {
     customerName: string;
+    paymentStatus: Variant_paymentConfirmed_awaitingVerification_rejected;
     orderId: bigint;
     prescriptionNote?: string;
     address: {
@@ -43,6 +44,7 @@ export interface Order {
     }>;
     phoneNumber: string;
     totalPrice: number;
+    transactionId?: string;
 }
 export interface Product {
     id: bigint;
@@ -61,17 +63,27 @@ export enum Category {
     medicines = "medicines",
     firstAid = "firstAid"
 }
+export enum Variant_paymentConfirmed_awaitingVerification_rejected {
+    paymentConfirmed = "paymentConfirmed",
+    awaitingVerification = "awaitingVerification",
+    rejected = "rejected"
+}
 export interface backendInterface {
     clearAllData(): Promise<void>;
+    confirmPayment(orderId: bigint): Promise<void>;
     getAllOrders(): Promise<Array<Order>>;
     getAllProducts(): Promise<Array<Product>>;
+    getConfirmedOrders(): Promise<Array<Order>>;
     getFeaturedProducts(): Promise<Array<Product>>;
     getOrder(orderId: bigint): Promise<Order | null>;
     getOrdersByPhoneNumber(phoneNumber: string): Promise<Array<Order>>;
+    getPendingPaymentOrders(): Promise<Array<Order>>;
     getProductById(id: bigint): Promise<Product | null>;
     getProductsByCategory(category: Category): Promise<Array<Product>>;
     initialize(): Promise<void>;
     placeOrder(request: PlaceOrderRequest): Promise<PlaceOrderResponse>;
+    rejectPayment(orderId: bigint): Promise<void>;
     searchProducts(searchTerm: string): Promise<Array<Product>>;
     seedProducts(): Promise<void>;
+    submitPaymentProof(orderId: bigint, transactionId: string): Promise<void>;
 }

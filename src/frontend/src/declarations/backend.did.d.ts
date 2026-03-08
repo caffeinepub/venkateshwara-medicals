@@ -17,6 +17,9 @@ export type Category = { 'vitaminsSupplements' : null } |
   { 'firstAid' : null };
 export interface Order {
   'customerName' : string,
+  'paymentStatus' : { 'paymentConfirmed' : null } |
+    { 'awaitingVerification' : null } |
+    { 'rejected' : null },
   'orderId' : bigint,
   'prescriptionNote' : [] | [string],
   'address' : { 'city' : string, 'line1' : string, 'pincode' : string },
@@ -24,6 +27,7 @@ export interface Order {
   'items' : Array<{ 'productId' : bigint, 'quantity' : bigint }>,
   'phoneNumber' : string,
   'totalPrice' : number,
+  'transactionId' : [] | [string],
 }
 export interface PlaceOrderRequest {
   'customerName' : string,
@@ -50,17 +54,22 @@ export interface Product {
 export type Time = bigint;
 export interface _SERVICE {
   'clearAllData' : ActorMethod<[], undefined>,
+  'confirmPayment' : ActorMethod<[bigint], undefined>,
   'getAllOrders' : ActorMethod<[], Array<Order>>,
   'getAllProducts' : ActorMethod<[], Array<Product>>,
+  'getConfirmedOrders' : ActorMethod<[], Array<Order>>,
   'getFeaturedProducts' : ActorMethod<[], Array<Product>>,
   'getOrder' : ActorMethod<[bigint], [] | [Order]>,
   'getOrdersByPhoneNumber' : ActorMethod<[string], Array<Order>>,
+  'getPendingPaymentOrders' : ActorMethod<[], Array<Order>>,
   'getProductById' : ActorMethod<[bigint], [] | [Product]>,
   'getProductsByCategory' : ActorMethod<[Category], Array<Product>>,
   'initialize' : ActorMethod<[], undefined>,
   'placeOrder' : ActorMethod<[PlaceOrderRequest], PlaceOrderResponse>,
+  'rejectPayment' : ActorMethod<[bigint], undefined>,
   'searchProducts' : ActorMethod<[string], Array<Product>>,
   'seedProducts' : ActorMethod<[], undefined>,
+  'submitPaymentProof' : ActorMethod<[bigint, string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

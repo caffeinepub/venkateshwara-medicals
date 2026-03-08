@@ -133,3 +133,81 @@ export function useGetOrder(orderId: bigint | null) {
     enabled: !!actor && !isFetching && orderId !== null,
   });
 }
+
+export function useGetPendingPaymentOrders(isInitialized = true) {
+  const { actor, isFetching } = useActor();
+  return useQuery<Order[]>({
+    queryKey: ["orders", "pending-payment"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getPendingPaymentOrders();
+    },
+    enabled: !!actor && !isFetching && isInitialized,
+    staleTime: 0,
+    refetchInterval: 10000,
+  });
+}
+
+export function useGetConfirmedOrders(isInitialized = true) {
+  const { actor, isFetching } = useActor();
+  return useQuery<Order[]>({
+    queryKey: ["orders", "confirmed"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getConfirmedOrders();
+    },
+    enabled: !!actor && !isFetching && isInitialized,
+    staleTime: 0,
+  });
+}
+
+export function useSubmitPaymentProof() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      transactionId,
+    }: {
+      orderId: bigint;
+      transactionId: string;
+    }) => {
+      if (!actor) throw new Error("Actor not initialized");
+      return actor.submitPaymentProof(orderId, transactionId);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["order", variables.orderId.toString()],
+      });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+}
+
+export function useConfirmPayment() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (orderId: bigint) => {
+      if (!actor) throw new Error("Actor not initialized");
+      return actor.confirmPayment(orderId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+}
+
+export function useRejectPayment() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (orderId: bigint) => {
+      if (!actor) throw new Error("Actor not initialized");
+      return actor.rejectPayment(orderId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+}
