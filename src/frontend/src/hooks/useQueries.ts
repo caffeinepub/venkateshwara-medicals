@@ -12,10 +12,14 @@ export function useInitialize() {
       return true;
     },
     enabled: !!actor && !isFetching,
-    staleTime: 0,
-    gcTime: 0,
-    retry: 5,
-    retryDelay: 1000,
+    // Keep the initialized state alive for the entire session
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: Number.POSITIVE_INFINITY,
+    retry: 8,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }
 
@@ -25,10 +29,19 @@ export function useGetAllProducts(isInitialized = true) {
     queryKey: ["products"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getAllProducts();
+      const result = await actor.getAllProducts();
+      // If backend returned empty after init, something went wrong -- retry
+      if (result.length === 0) {
+        // Re-seed by calling initialize again
+        await actor.initialize();
+        return actor.getAllProducts();
+      }
+      return result;
     },
     enabled: !!actor && !isFetching && isInitialized,
     staleTime: 0,
+    retry: 5,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
   });
 }
 
@@ -38,10 +51,17 @@ export function useGetFeaturedProducts(isInitialized = true) {
     queryKey: ["products", "featured"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getFeaturedProducts();
+      const result = await actor.getFeaturedProducts();
+      if (result.length === 0) {
+        await actor.initialize();
+        return actor.getFeaturedProducts();
+      }
+      return result;
     },
     enabled: !!actor && !isFetching && isInitialized,
     staleTime: 0,
+    retry: 5,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
   });
 }
 
@@ -58,6 +78,8 @@ export function useGetProductsByCategory(
     },
     enabled: !!actor && !isFetching && category !== null && isInitialized,
     staleTime: 0,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
   });
 }
 
