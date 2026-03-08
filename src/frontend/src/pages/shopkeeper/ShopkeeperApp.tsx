@@ -25,15 +25,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Link,
-  Outlet,
-  RouterProvider,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  useLocation,
-} from "@tanstack/react-router";
-import {
   AlertTriangle,
   CheckCircle2,
   ClipboardList,
@@ -354,19 +345,31 @@ function PinGate({
   );
 }
 
+type ShopkeeperTab = "dashboard" | "products" | "payments" | "orders" | "sell";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Shopkeeper Navbar
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ShopkeeperNavbar({ onLogout }: { onLogout: () => void }) {
-  const { pathname } = useLocation();
-
-  const navLinks = [
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/products", label: "Products", icon: Package },
-    { to: "/payments", label: "Payments", icon: CreditCard },
-    { to: "/orders", label: "Orders", icon: ClipboardList },
-    { to: "/sell", label: "Sell", icon: ShoppingBag },
+function ShopkeeperNavbar({
+  activeTab,
+  onTabChange,
+  onLogout,
+}: {
+  activeTab: ShopkeeperTab;
+  onTabChange: (tab: ShopkeeperTab) => void;
+  onLogout: () => void;
+}) {
+  const navLinks: {
+    tab: ShopkeeperTab;
+    label: string;
+    icon: React.ElementType;
+  }[] = [
+    { tab: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { tab: "products", label: "Products", icon: Package },
+    { tab: "payments", label: "Payments", icon: CreditCard },
+    { tab: "orders", label: "Orders", icon: ClipboardList },
+    { tab: "sell", label: "Sell", icon: ShoppingBag },
   ];
 
   return (
@@ -414,16 +417,14 @@ function ShopkeeperNavbar({ onLogout }: { onLogout: () => void }) {
 
         {/* Nav links */}
         <nav className="flex items-center gap-1 py-1 overflow-x-auto">
-          {navLinks.map(({ to, label, icon: Icon }) => {
-            const isActive =
-              to === "/dashboard"
-                ? pathname === "/" || pathname === "/dashboard"
-                : pathname === to || pathname.startsWith(`${to}/`);
+          {navLinks.map(({ tab, label, icon: Icon }) => {
+            const isActive = activeTab === tab;
             return (
-              <Link
-                key={to}
-                to={to}
+              <button
+                key={tab}
+                type="button"
                 data-ocid={`shopkeeper.nav.${label.toLowerCase()}_link`}
+                onClick={() => onTabChange(tab)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-md font-body text-sm whitespace-nowrap transition-colors ${
                   isActive
                     ? "bg-amber-500/15 text-amber-400 border border-amber-500/25"
@@ -432,7 +433,7 @@ function ShopkeeperNavbar({ onLogout }: { onLogout: () => void }) {
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 {label}
-              </Link>
+              </button>
             );
           })}
         </nav>
@@ -445,12 +446,26 @@ function ShopkeeperNavbar({ onLogout }: { onLogout: () => void }) {
 // Layout wrapper (wraps authenticated shopkeeper pages)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ShopkeeperLayout({ onLogout }: { onLogout: () => void }) {
+function ShopkeeperLayout({
+  activeTab,
+  onTabChange,
+  onLogout,
+  children,
+}: {
+  activeTab: ShopkeeperTab;
+  onTabChange: (tab: ShopkeeperTab) => void;
+  onLogout: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <ShopkeeperNavbar onLogout={onLogout} />
+      <ShopkeeperNavbar
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        onLogout={onLogout}
+      />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
-        <Outlet />
+        {children}
       </main>
       <Toaster richColors position="top-right" />
     </div>
@@ -2045,82 +2060,55 @@ function SellPage() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Router setup (for the shopkeeper sub-app)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function createShopkeeperRouter(onLogout: () => void) {
-  const rootRoute = createRootRoute({
-    component: () => <ShopkeeperLayout onLogout={onLogout} />,
-  });
-
-  const indexRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/",
-    component: DashboardPage,
-  });
-
-  const dashboardRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/dashboard",
-    component: DashboardPage,
-  });
-
-  const productsRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/products",
-    component: ProductsPage,
-  });
-
-  const paymentsRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/payments",
-    component: PaymentsPage,
-  });
-
-  const ordersRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/orders",
-    component: OrdersPage,
-  });
-
-  const sellRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/sell",
-    component: SellPage,
-  });
-
-  const routeTree = rootRoute.addChildren([
-    indexRoute,
-    dashboardRoute,
-    productsRoute,
-    paymentsRoute,
-    ordersRoute,
-    sellRoute,
-  ]);
-
-  return createRouter({ routeTree });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main ShopkeeperApp export
+// Main ShopkeeperApp export (state-based tabs, no nested router)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const shopkeeperQueryClient = new QueryClient();
 
 type PortalView = "landing" | "pin" | "portal";
 
+function ShopkeeperPortalContent({ onLogout }: { onLogout: () => void }) {
+  const [activeTab, setActiveTab] = useState<ShopkeeperTab>("dashboard");
+
+  const renderTab = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return <DashboardPage />;
+      case "products":
+        return <ProductsPage />;
+      case "payments":
+        return <PaymentsPage />;
+      case "orders":
+        return <OrdersPage />;
+      case "sell":
+        return <SellPage />;
+      default:
+        return <DashboardPage />;
+    }
+  };
+
+  return (
+    <QueryClientProvider client={shopkeeperQueryClient}>
+      <ShopkeeperLayout
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onLogout={onLogout}
+      >
+        {renderTab()}
+      </ShopkeeperLayout>
+    </QueryClientProvider>
+  );
+}
+
 export default function ShopkeeperApp() {
   const [view, setView] = useState<PortalView>(() =>
     sessionStorage.getItem(SESSION_KEY) === "1" ? "portal" : "landing",
   );
 
-  // Create the router lazily once we need it, and recreate on logout
-  const [router] = useState(() =>
-    createShopkeeperRouter(() => {
-      sessionStorage.removeItem(SESSION_KEY);
-      setView("landing");
-    }),
-  );
+  const handleLogout = () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setView("landing");
+  };
 
   if (view === "landing") {
     return (
@@ -2143,9 +2131,7 @@ export default function ShopkeeperApp() {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-      <QueryClientProvider client={shopkeeperQueryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+      <ShopkeeperPortalContent onLogout={handleLogout} />
     </ThemeProvider>
   );
 }

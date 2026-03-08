@@ -7,9 +7,9 @@ import Time "mo:core/Time";
 import Order "mo:core/Order";
 import Iter "mo:core/Iter";
 import Float "mo:core/Float";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
   type Category = {
     #medicines;
